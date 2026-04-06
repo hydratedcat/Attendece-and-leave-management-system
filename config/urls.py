@@ -14,31 +14,43 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path, include
-from django.http import JsonResponse
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-from .metrics import metrics_view
 import os
 
+from django.contrib import admin
+from django.http import JsonResponse
+from django.urls import include, path
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
+
+from .metrics import metrics_view
+
+
 def health_check(request):
-    return JsonResponse({'status': 'healthy'})
+    return JsonResponse({"status": "healthy"})
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/auth/', include('users.urls')),
-    path('api/attendance/', include('attendance.urls')),
-    path('api/leaves/', include('leaves.urls')),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
-    path('metrics/', metrics_view, name='metrics'),
-    path('api/health/', health_check, name='api_health_check'),
-    path('health/', health_check, name='health_check'),
+    path("admin/", admin.site.urls),
+    path("api/auth/", include("users.urls")),
+    path("api/attendance/", include("attendance.urls")),
+    path("api/leaves/", include("leaves.urls")),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+    path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+    path("metrics/", metrics_view, name="metrics"),
+    path("api/health/", health_check, name="api_health_check"),
+    path("health/", health_check, name="health_check"),
 ]
 
 # Django Debug Toolbar
-if os.getenv('DEBUG') == 'True':
+if os.getenv("DEBUG") == "True":
     urlpatterns += [
-        path('__debug__/', include('debug_toolbar.urls')),
+        path("__debug__/", include("debug_toolbar.urls")),
     ]

@@ -1,6 +1,7 @@
-from locust import HttpUser, task, between
 import random
 import string
+
+from locust import HttpUser, between, task
 
 
 class AttendanceUser(HttpUser):

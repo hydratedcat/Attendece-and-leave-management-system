@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from .models import Attendance
 
 
@@ -7,8 +8,8 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Attendance
-        fields = '__all__'
-        read_only_fields = ('user', 'date')
+        fields = "__all__"
+        read_only_fields = ("user", "date")
 
 
 class DailyReportSerializer(serializers.Serializer):
