@@ -19,7 +19,9 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ("id", "username", "email", "password", "password2", "role")
+        # NOTE: 'role' intentionally excluded — prevents privilege escalation.
+        # New users are always EMPLOYEE. Only HR Admins can assign roles.
+        fields = ("id", "username", "email", "password", "password2")
 
     def validate(self, attrs):
         if attrs["password"] != attrs["password2"]:

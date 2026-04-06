@@ -139,17 +139,38 @@ class UserTests(TestCase):
     def test_user_serializer_validation(self):
         from .serializers import RegisterSerializer
 
+        # Test: 'role' field is intentionally excluded from RegisterSerializer
+        # to prevent privilege escalation. Any role value should be ignored.
         serializer = RegisterSerializer(
             data={
                 "username": "test",
                 "password": "StrongP@ss12345",
                 "password2": "StrongP@ss12345",
                 "email": "test@example.com",
-                "role": "INVALID_ROLE",
+                "role": "HR_ADMIN",  # Attempted privilege escalation
             }
         )
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("role", serializer.errors)
+        # Serializer should be valid (role is simply ignored, not rejected)
+        self.assertTrue(serializer.is_valid())
+        # 'role' should NOT be in validated data
+        self.assertNotIn("role", serializer.validated_data)
+
+    def test_register_ignores_role_field(self):
+        """Ensure anonymous users cannot self-assign roles via registration."""
+        resp = self.client.post(
+            "/api/auth/register/",
+            {
+                "username": "attacker",
+                "password": "StrongP@ss12345",
+                "password2": "StrongP@ss12345",
+                "email": "attacker@test.com",
+                "role": "HR_ADMIN",
+            },
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        # User should be EMPLOYEE regardless of what was submitted
+        user = get_user_model().objects.get(username="attacker")
+        self.assertEqual(user.role, "EMPLOYEE")
 
     def test_custom_user_model_methods(self):
         # Test the custom methods on CustomUser

@@ -1,0 +1,44 @@
+# Version control
+.git
+.gitignore
+
+# Environment files (secrets!)
+.env
+.env.*
+
+# Python caches
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+
+# Virtual environments
+.venv/
+venv/
+
+# Database files
+*.sqlite3
+db.sqlite3
+
+# IDE
+.vscode/
+.idea/
+
+# Docker files (don't include compose in the image)
+docker-compose*.yml
+Dockerfile
+
+# Documentation
+*.md
+
+# CI/CD
+.github/
+
+# Testing / Linting config
+.flake8
+pyproject.toml
+pytest.ini
+locustfile.py
+prometheus.yml
+nginx/
