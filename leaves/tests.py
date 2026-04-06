@@ -160,7 +160,7 @@ class LeaveTests(TestCase):
         )
         LeaveRequest.objects.create(
             employee=self.employee,
-            leave_type="VACATION",
+            leave_type="CASUAL",
             start_date="2026-05-01",
             end_date="2026-05-05",
             reason="Holiday",
@@ -194,11 +194,12 @@ class LeaveTests(TestCase):
 
     def test_hr_admin_can_view_audit_logs(self):
         AuditLog.objects.create(
-            leave_request_id=1,
+            actor=self.employee,
             action="CREATED",
-            old_status=None,
-            new_status="PENDING",
-            user=self.employee,
+            target_id=1,
+            target_model="LeaveRequest",
+            from_state=None,
+            to_state="PENDING",
             metadata={"leave_type": "SICK"},
         )
 

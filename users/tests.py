@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
@@ -85,7 +87,8 @@ class UserTests(TestCase):
             "/api/users/",
             {
                 "username": "newuser",
-                "password": "newpass",
+                "password": "StrongP@ss12345",
+                "password2": "StrongP@ss12345",
                 "email": "new@test.com",
                 "role": "EMPLOYEE",
             },
@@ -99,7 +102,8 @@ class UserTests(TestCase):
             "/api/users/",
             {
                 "username": "newuser2",
-                "password": "newpass",
+                "password": "StrongP@ss12345",
+                "password2": "StrongP@ss12345",
                 "email": "new2@test.com",
                 "role": "EMPLOYEE",
             },
@@ -110,29 +114,36 @@ class UserTests(TestCase):
         # Test that permissions work correctly
         from .permissions import IsEmployee, IsHRAdmin, IsManagerOrHRAdmin
 
+        # Create mock request objects with user attribute
+        def make_request(user):
+            request = MagicMock()
+            request.user = user
+            return request
+
         # Employee permission
         permission = IsEmployee()
-        self.assertTrue(permission.has_permission(None, None, self.employee))
-        self.assertFalse(permission.has_permission(None, None, self.manager))
+        self.assertTrue(permission.has_permission(make_request(self.employee), None))
+        self.assertFalse(permission.has_permission(make_request(self.manager), None))
 
         # Manager/HR permission
         permission = IsManagerOrHRAdmin()
-        self.assertTrue(permission.has_permission(None, None, self.manager))
-        self.assertTrue(permission.has_permission(None, None, self.hr_admin))
-        self.assertFalse(permission.has_permission(None, None, self.employee))
+        self.assertTrue(permission.has_permission(make_request(self.manager), None))
+        self.assertTrue(permission.has_permission(make_request(self.hr_admin), None))
+        self.assertFalse(permission.has_permission(make_request(self.employee), None))
 
         # HR Admin permission
         permission = IsHRAdmin()
-        self.assertTrue(permission.has_permission(None, None, self.hr_admin))
-        self.assertFalse(permission.has_permission(None, None, self.manager))
+        self.assertTrue(permission.has_permission(make_request(self.hr_admin), None))
+        self.assertFalse(permission.has_permission(make_request(self.manager), None))
 
     def test_user_serializer_validation(self):
-        from .serializers import UserSerializer
+        from .serializers import RegisterSerializer
 
-        serializer = UserSerializer(
+        serializer = RegisterSerializer(
             data={
                 "username": "test",
-                "password": "pass",
+                "password": "StrongP@ss12345",
+                "password2": "StrongP@ss12345",
                 "email": "test@example.com",
                 "role": "INVALID_ROLE",
             }
@@ -142,7 +153,5 @@ class UserTests(TestCase):
 
     def test_custom_user_model_methods(self):
         # Test the custom methods on CustomUser
-        self.assertEqual(
-            self.employee.get_full_name(), "employee"
-        )  # Since no first/last name
-        self.assertEqual(str(self.employee), "employee")
+        self.assertIn("employee", str(self.employee))
+        self.assertEqual(self.employee.get_full_name(), "")

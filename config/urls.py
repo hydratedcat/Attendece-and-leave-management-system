@@ -35,6 +35,7 @@ def health_check(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("users.urls")),
+    path("api/users/", include("users.user_urls")),
     path("api/attendance/", include("attendance.urls")),
     path("api/leaves/", include("leaves.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

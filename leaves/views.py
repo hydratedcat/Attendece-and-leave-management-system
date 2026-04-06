@@ -1,3 +1,4 @@
+from django.db.models import Count, Q
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
@@ -19,7 +20,8 @@ class LeavesRootView(generics.GenericAPIView):
                     {"pending": "/api/leaves/pending/"},
                     {"approve": "/api/leaves/<id>/approve/"},
                     {"reject": "/api/leaves/<id>/reject/"},
-                    {"audit_logs": "/api/leaves/audit/logs/"},
+                    {"audit_logs": "/api/leaves/audit/"},
+                    {"summary": "/api/leaves/reports/summary/"},
                 ]
             }
         )
@@ -83,6 +85,23 @@ class PendingLeavesView(generics.ListAPIView):
 
     def get_queryset(self):
         return LeaveRequest.objects.filter(status="PENDING")
+
+
+class LeaveSummaryReportView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated, IsManagerOrHRAdmin]
+
+    def get(self, request, *args, **kwargs):
+        data = (
+            LeaveRequest.objects.values("employee__username")
+            .annotate(
+                total=Count("id"),
+                pending=Count("id", filter=Q(status="PENDING")),
+                approved=Count("id", filter=Q(status="APPROVED")),
+                rejected=Count("id", filter=Q(status="REJECTED")),
+            )
+            .order_by("employee__username")
+        )
+        return Response(list(data))
 
 
 class AuditLogView(generics.ListAPIView):

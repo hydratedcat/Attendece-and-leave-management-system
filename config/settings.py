@@ -40,8 +40,10 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 is_testing = (
     "pytest" in sys.modules
     or "test" in sys.argv
-    or "DJANGO_SETTINGS_MODULE" in os.environ
-    and "test" in os.environ["DJANGO_SETTINGS_MODULE"]
+    or (
+        "DJANGO_SETTINGS_MODULE" in os.environ
+        and "test" in os.environ.get("DJANGO_SETTINGS_MODULE", "")
+    )
 )
 
 INSTALLED_APPS = [
@@ -95,6 +97,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
 
 # Database
@@ -252,3 +255,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

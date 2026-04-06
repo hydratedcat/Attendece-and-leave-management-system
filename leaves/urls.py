@@ -5,6 +5,7 @@ from .views import (
     ApproveLeaveView,
     AuditLogView,
     LeavesRootView,
+    LeaveSummaryReportView,
     MyLeavesView,
     PendingLeavesView,
     RejectLeaveView,
@@ -17,5 +18,6 @@ urlpatterns = [
     path("<int:pk>/reject/", RejectLeaveView.as_view(), name="reject_leave"),
     path("my/", MyLeavesView.as_view(), name="my_leaves"),
     path("pending/", PendingLeavesView.as_view(), name="pending_leaves"),
-    path("audit/logs/", AuditLogView.as_view(), name="audit_logs"),
+    path("audit/", AuditLogView.as_view(), name="audit_logs"),
+    path("reports/summary/", LeaveSummaryReportView.as_view(), name="leave_summary"),
 ]
