@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    LeavesRootView,
     ApplyLeaveView,
     ApproveLeaveView,
     RejectLeaveView,
@@ -9,6 +10,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path('', LeavesRootView.as_view(), name='leaves_root'),
     path('apply/', ApplyLeaveView.as_view(), name='apply_leave'),
     path('<int:pk>/approve/', ApproveLeaveView.as_view(), name='approve_leave'),
     path('<int:pk>/reject/', RejectLeaveView.as_view(), name='reject_leave'),

@@ -8,8 +8,23 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework import serializers
 from .models import Attendance
-from .serializers import AttendanceSerializer
+from .serializers import AttendanceSerializer, DailyReportSerializer, MonthlyReportSerializer
 from users.permissions import IsEmployee, IsManager
+
+
+class AttendanceRootView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        return Response({
+            'endpoints': [
+                {'mark': '/api/attendance/mark/'},
+                {'my': '/api/attendance/my/'},
+                {'team': '/api/attendance/team/'},
+                {'daily_report': '/api/attendance/reports/daily/'},
+                {'monthly_report': '/api/attendance/reports/monthly/'},
+            ]
+        })
 
 
 @method_decorator(ratelimit(key='user', rate='10/m', method='POST', block=True), name='dispatch')
@@ -41,6 +56,7 @@ class TeamAttendanceView(generics.ListAPIView):
 
 
 class DailyAttendanceReportView(generics.GenericAPIView):
+    serializer_class = DailyReportSerializer
     permission_classes = [permissions.IsAuthenticated, IsManager]
 
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
@@ -50,10 +66,12 @@ class DailyAttendanceReportView(generics.GenericAPIView):
             absent=Count('id', filter=Q(status='ABSENT')),
             half_day=Count('id', filter=Q(status='HALF_DAY')),
         ).order_by('date')
-        return Response(data)
+        serializer = self.get_serializer(data, many=True)
+        return Response(serializer.data)
 
 
 class MonthlyAttendanceReportView(generics.GenericAPIView):
+    serializer_class = MonthlyReportSerializer
     permission_classes = [permissions.IsAuthenticated, IsManager]
 
     @method_decorator(cache_page(60 * 60))  # Cache for 1 hour
@@ -63,4 +81,5 @@ class MonthlyAttendanceReportView(generics.GenericAPIView):
             absent=Count('id', filter=Q(status='ABSENT')),
             half_day=Count('id', filter=Q(status='HALF_DAY')),
         ).order_by('month', 'user')
-        return Response(data)
+        serializer = self.get_serializer(data, many=True)
+        return Response(serializer.data)

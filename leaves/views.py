@@ -7,6 +7,22 @@ from .serializers import LeaveRequestSerializer
 from users.permissions import IsEmployee, IsManagerOrHRAdmin, IsHRAdmin
 
 
+class LeavesRootView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        return Response({
+            'endpoints': [
+                {'apply': '/api/leaves/apply/'},
+                {'my': '/api/leaves/my/'},
+                {'pending': '/api/leaves/pending/'},
+                {'approve': '/api/leaves/<id>/approve/'},
+                {'reject': '/api/leaves/<id>/reject/'},
+                {'audit_logs': '/api/leaves/audit/logs/'},
+            ]
+        })
+
+
 class ApplyLeaveView(generics.CreateAPIView):
     serializer_class = LeaveRequestSerializer
     permission_classes = [permissions.IsAuthenticated, IsEmployee]

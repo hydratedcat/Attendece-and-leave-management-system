@@ -161,8 +161,8 @@ class LeaveTests(TestCase):
         self.client.force_authenticate(user=self.manager)
         self.client.patch(f'/api/leaves/{leave_id}/approve/', {})
 
-        # Check audit log
-        self.assertEqual(AuditLog.objects.count(), 2)  # One for creation, one for approval
+        # Check audit log (only created on approval, not on creation)
+        self.assertEqual(AuditLog.objects.count(), 1)
 
     def test_hr_admin_can_view_audit_logs(self):
         AuditLog.objects.create(
