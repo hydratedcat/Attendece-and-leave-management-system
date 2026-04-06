@@ -41,4 +41,3 @@ urlpatterns = [
     path("login/", RateLimitedLoginView.as_view(), name="token_obtain_pair"),
     path("refresh/", RateLimitedRefreshView.as_view(), name="token_refresh"),
 ]
-
