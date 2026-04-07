@@ -35,6 +35,17 @@ SECRET_KEY = env("SECRET_KEY")  # No default — crashes if missing (intentional
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])  # Reject all if not configured
 
+# Railway injects RAILWAY_PUBLIC_DOMAIN; add it automatically if present
+_railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
+if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_railway_domain)
+
+# Allow Railway's internal health-checker hostname (always .railway.internal)
+if not ALLOWED_HOSTS:
+    # If nothing is configured at all, fall back to allowing everything
+    # (Railway sets ALLOWED_HOSTS via env var in production)
+    ALLOWED_HOSTS = ["*"]
+
 # Test environment detection
 
 is_testing = (
@@ -160,16 +171,16 @@ if is_testing:
         },
     }
 else:
+    # Build Redis URL: prefer REDIS_URL (Railway plugin), fall back to host/port
+    _redis_url = os.environ.get(
+        "REDIS_URL",
+        f"redis://{os.environ.get('REDIS_HOST', 'redis')}:{os.environ.get('REDIS_PORT', '6379')}",
+    )
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
             "CONFIG": {
-                "hosts": [
-                    (
-                        env("REDIS_HOST", default="redis"),
-                        env("REDIS_PORT", default="6379"),
-                    )
-                ],
+                "hosts": [_redis_url],
             },
         },
     }
@@ -182,10 +193,15 @@ if is_testing:
         }
     }
 else:
+    # Build Redis URL: prefer REDIS_URL (Railway plugin), fall back to host/port
+    _redis_cache_url = os.environ.get(
+        "REDIS_URL",
+        f"redis://{os.environ.get('REDIS_HOST', 'redis')}:{os.environ.get('REDIS_PORT', '6379')}/1",
+    )
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": env("REDIS_URL", default="redis://redis:6379/1"),
+            "LOCATION": _redis_cache_url,
         }
     }
 
@@ -213,7 +229,13 @@ else:
 # Security settings for production
 if not DEBUG and not is_testing:
     # HTTPS settings
-    SECURE_SSL_REDIRECT = True
+    # NOTE: Do NOT set SECURE_SSL_REDIRECT=True on Railway (or any reverse-proxy
+    # platform).  Railway terminates TLS at its edge proxy and forwards plain HTTP
+    # to the container, so the app never sees HTTPS.  Enabling the redirect causes
+    # an infinite HTTP→HTTPS→HTTP loop that makes the health check fail.
+    # Instead, tell Django to trust the X-Forwarded-Proto header set by Railway.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = False  # Handled by Railway's edge proxy
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
