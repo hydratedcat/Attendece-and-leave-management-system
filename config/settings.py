@@ -239,11 +239,19 @@ if is_testing:
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True
 else:
-    CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="memory://")
-    CELERY_RESULT_BACKEND = env(
-        "CELERY_RESULT_BACKEND", default="cache+redis://redis:6379/0"
+    # Default to in-memory broker/backend when Redis is not available.
+    # Railway: real REDIS_URL is auto-injected when you add the Redis plugin.
+    _celery_broker_default = f"{_raw_redis_url}/0" if _raw_redis_url else "memory://"
+    _celery_result_default = (
+        f"cache+{_raw_redis_url}/0" if _raw_redis_url else "cache+memory://"
     )
-    CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=True)
+    CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=_celery_broker_default)
+    CELERY_RESULT_BACKEND = env(
+        "CELERY_RESULT_BACKEND", default=_celery_result_default
+    )
+    CELERY_TASK_ALWAYS_EAGER = env.bool(
+        "CELERY_TASK_ALWAYS_EAGER", default=not bool(_raw_redis_url)
+    )
     CELERY_TASK_EAGER_PROPAGATES = env.bool(
         "CELERY_TASK_EAGER_PROPAGATES", default=True
     )
