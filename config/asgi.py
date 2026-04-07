@@ -1,10 +1,8 @@
 """
 ASGI config for config project.
 
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
+IMPORTANT: get_asgi_application() MUST be called before importing
+any app modules (like routing/consumers) because it calls django.setup().
 """
 
 import os
@@ -33,14 +31,17 @@ async def health_check(scope, receive, send):
 
 def get_application():
     """Build the full ASGI application with health-check short-circuit."""
+    # django.setup() is called inside get_asgi_application() — MUST be first
+    from django.core.asgi import get_asgi_application
+
+    django_asgi_app = get_asgi_application()
+
+    # Only import app modules AFTER django.setup() has been called above
     from channels.auth import AuthMiddlewareStack
     from channels.routing import ProtocolTypeRouter, URLRouter
     from channels.security.websocket import AllowedHostsOriginValidator
-    from django.core.asgi import get_asgi_application
 
     from notifications.routing import websocket_urlpatterns
-
-    django_asgi_app = get_asgi_application()
 
     inner_app = ProtocolTypeRouter(
         {
@@ -51,7 +52,7 @@ def get_application():
         }
     )
 
-    # Wrap: intercept /health/ BEFORE any Django middleware runs
+    # Intercept /health/ BEFORE any Django middleware runs
     async def asgi_app(scope, receive, send):
         if scope["type"] == "http" and scope.get("path", "").rstrip("/") == "/health":
             await health_check(scope, receive, send)
