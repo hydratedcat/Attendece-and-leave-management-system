@@ -120,8 +120,17 @@ ASGI_APPLICATION = "config.asgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+#
+# Priority order:
+#  1. DATABASE_URL  — injected by Railway / most PaaS platforms
+#  2. DB_ENGINE=postgres + individual DB_* vars  — docker-compose style
+#  3. SQLite  — local development fallback
 
-if env("DB_ENGINE", default="sqlite") == "postgres":
+_database_url = os.environ.get("DATABASE_URL", "")
+if _database_url:
+    # django-environ parses postgres:// / postgresql:// URLs automatically
+    DATABASES = {"default": env.db_url("DATABASE_URL")}
+elif env("DB_ENGINE", default="sqlite") == "postgres":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -163,51 +172,63 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
 }
 
+# Determine Redis URL once — used for both Channel Layers and Cache.
+# Priority: REDIS_URL (Railway plugin) > REDIS_HOST/PORT (docker-compose) > empty (no Redis)
+_raw_redis_url = os.environ.get(
+    "REDIS_URL",
+    f"redis://{os.environ.get('REDIS_HOST', '')}:{os.environ.get('REDIS_PORT', '6379')}" if os.environ.get('REDIS_HOST') else "",
+)
+
 # Channels
-if is_testing:
+if is_testing or not _raw_redis_url:
+    # Use in-memory channel layer when Redis is not available (safe for single-process)
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels.layers.InMemoryChannelLayer",
         },
     }
 else:
-    # Build Redis URL: prefer REDIS_URL (Railway plugin), fall back to host/port
-    _redis_url = os.environ.get(
-        "REDIS_URL",
-        f"redis://{os.environ.get('REDIS_HOST', 'redis')}:{os.environ.get('REDIS_PORT', '6379')}",
-    )
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
             "CONFIG": {
-                "hosts": [_redis_url],
+                "hosts": [_raw_redis_url],
             },
         },
     }
 
 # Caching
+
 if is_testing:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         }
     }
-else:
-    # Build Redis URL: prefer REDIS_URL (Railway plugin), fall back to host/port
-    _redis_cache_url = os.environ.get(
-        "REDIS_URL",
-        f"redis://{os.environ.get('REDIS_HOST', 'redis')}:{os.environ.get('REDIS_PORT', '6379')}/1",
-    )
+elif _raw_redis_url:
+    # Strip trailing /N db index if present, then append /1 for cache
+    _cache_redis_url = _raw_redis_url.rstrip("/0123456789").rstrip("/") + "/1"
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": _redis_cache_url,
+            "LOCATION": _cache_redis_url,
+        }
+    }
+else:
+    # No Redis configured — use local memory cache (safe for single-process deploy)
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         }
     }
 
-# Session caching
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+# Sessions: use cache if Redis is available, else database-backed sessions
+# (avoids a hard crash when Redis is not configured on Railway)
+if _raw_redis_url and not is_testing:
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
+else:
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 # Celery (local default: in-memory broker to avoid rabbitmq requirement in dev/test)
 if is_testing:

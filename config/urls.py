@@ -28,8 +28,15 @@ from drf_spectacular.views import (
 from .metrics import metrics_view
 
 
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
+
+
+@csrf_exempt
+@never_cache
 def health_check(request):
-    return JsonResponse({"status": "healthy"})
+    """Minimal liveness probe — must never touch DB, Redis, or session."""
+    return JsonResponse({"status": "ok"}, status=200)
 
 
 urlpatterns = [
