@@ -176,7 +176,9 @@ SPECTACULAR_SETTINGS = {
 # Priority: REDIS_URL (Railway plugin) > REDIS_HOST/PORT (docker-compose) > empty (no Redis)
 _raw_redis_url = os.environ.get(
     "REDIS_URL",
-    f"redis://{os.environ.get('REDIS_HOST', '')}:{os.environ.get('REDIS_PORT', '6379')}" if os.environ.get('REDIS_HOST') else "",
+    f"redis://{os.environ.get('REDIS_HOST', '')}:{os.environ.get('REDIS_PORT', '6379')}"
+    if os.environ.get("REDIS_HOST")
+    else "",
 )
 
 # Channels

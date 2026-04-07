@@ -19,6 +19,8 @@ import os
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -26,10 +28,6 @@ from drf_spectacular.views import (
 )
 
 from .metrics import metrics_view
-
-
-from django.views.decorators.cache import never_cache
-from django.views.decorators.csrf import csrf_exempt
 
 
 @csrf_exempt
