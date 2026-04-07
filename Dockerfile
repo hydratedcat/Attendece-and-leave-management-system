@@ -13,9 +13,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Make entrypoint executable
-RUN chmod +x entrypoint.sh
-
 # Create non-root user for security
 RUN addgroup --system appgroup && \
     adduser --system --ingroup appgroup appuser && \
@@ -25,4 +22,5 @@ USER appuser
 
 EXPOSE 8000
 
-ENTRYPOINT ["./entrypoint.sh"]
+# Use Python startup script — avoids CRLF/shell issues from Windows dev machines
+CMD ["python", "startup.py"]

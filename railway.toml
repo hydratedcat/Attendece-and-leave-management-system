@@ -3,8 +3,7 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# entrypoint.sh handles migrate + daphne startup.
-# Railway injects $PORT automatically.
+# startup.py handles migrate + daphne. Railway injects $PORT automatically.
 healthcheckPath = "/health/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
