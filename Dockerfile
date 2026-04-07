@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Collect static files for production
-RUN python manage.py collectstatic --noinput 2>/dev/null || true
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
 
 # Create non-root user for security
 RUN addgroup --system appgroup && \
@@ -25,5 +25,4 @@ USER appuser
 
 EXPOSE 8000
 
-# Shell form so $PORT env variable is picked up at runtime (required by Railway)
-CMD daphne -b 0.0.0.0 -p ${PORT:-8000} config.asgi:application
+ENTRYPOINT ["./entrypoint.sh"]

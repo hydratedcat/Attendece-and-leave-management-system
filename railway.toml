@@ -3,9 +3,8 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# Run DB migrations then start the ASGI server.
-# Railway injects $PORT; daphne binds to it.
-startCommand = "python manage.py migrate --noinput && daphne -b 0.0.0.0 -p $PORT config.asgi:application"
+# entrypoint.sh handles migrate + daphne startup.
+# Railway injects $PORT automatically.
 healthcheckPath = "/health/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
