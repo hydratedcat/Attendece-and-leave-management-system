@@ -246,9 +246,7 @@ else:
         f"cache+{_raw_redis_url}/0" if _raw_redis_url else "cache+memory://"
     )
     CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=_celery_broker_default)
-    CELERY_RESULT_BACKEND = env(
-        "CELERY_RESULT_BACKEND", default=_celery_result_default
-    )
+    CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=_celery_result_default)
     CELERY_TASK_ALWAYS_EAGER = env.bool(
         "CELERY_TASK_ALWAYS_EAGER", default=not bool(_raw_redis_url)
     )
