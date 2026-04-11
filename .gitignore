@@ -8,8 +8,6 @@ __pycache__/
 db.sqlite3
 .env
 .env.*
-!.env.example
-!.env.prod.example
 config/settings_local.py
 *.log
 *.egg-info/
@@ -19,3 +17,21 @@ htmlcov/
 coverage.xml
 bandit-report.json
 .mypy_cache/
+
+# ── Private / Internal Docs (local eyes only) ───────────────────────
+KEYS_AND_PASSWORDS.md
+DEPLOYMENT.md
+IMPLEMENTATION.md
+WEEK3_SUMMARY.md
+PROJECT_REVIEW.md
+LOAD_TESTING.md
+
+# ── Internal tooling & infra configs ────────────────────────────────
+test_env.py
+locustfile.py
+prometheus.yml
+docker-compose.prod.yml
+
+# ── Env templates (no real secrets, but still internal) ─────────────
+.env.example
+.env.prod.example
